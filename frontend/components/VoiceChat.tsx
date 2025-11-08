@@ -43,6 +43,8 @@ export default function VoiceChat() {
   const audioQueueRef = useRef<string[]>([]);
   const isProcessingAudioRef = useRef(false);
   const selectedVoiceRef = useRef<string>('en-IN-NeerjaNeural');
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const shouldPauseRecordingRef = useRef(false);
 
   // Available Edge TTS voices - VERIFIED WORKING
   const voices = [
@@ -100,6 +102,10 @@ export default function VoiceChat() {
     }
     if (silenceTimeoutRef.current) {
       clearTimeout(silenceTimeoutRef.current);
+    }
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
     }
   };
 
@@ -166,11 +172,40 @@ export default function VoiceChat() {
     if (audioQueueRef.current.length === 0) {
       isProcessingAudioRef.current = false;
       setIsPlaying(false);
+      shouldPauseRecordingRef.current = false;
+
+      // Resume recording after playback
+      if (
+        !isMuted &&
+        mediaRecorderRef.current &&
+        mediaRecorderRef.current.state === 'inactive'
+      ) {
+        setTimeout(() => {
+          if (
+            mediaRecorderRef.current &&
+            mediaRecorderRef.current.state === 'inactive' &&
+            !isMuted
+          ) {
+            audioChunksRef.current = [];
+            mediaRecorderRef.current.start();
+            monitorAudioLevel();
+          }
+        }, 100);
+      }
       return;
     }
 
     isProcessingAudioRef.current = true;
     setIsPlaying(true);
+    shouldPauseRecordingRef.current = true;
+
+    // Stop recording while AI is speaking
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state === 'recording'
+    ) {
+      mediaRecorderRef.current.stop();
+    }
 
     const audioData = audioQueueRef.current.shift()!;
 
@@ -180,19 +215,24 @@ export default function VoiceChat() {
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
 
+      currentAudioRef.current = audio;
+
       audio.onended = () => {
         URL.revokeObjectURL(audioUrl);
+        currentAudioRef.current = null;
         processAudioQueue();
       };
 
       audio.onerror = () => {
         URL.revokeObjectURL(audioUrl);
+        currentAudioRef.current = null;
         processAudioQueue();
       };
 
       await audio.play();
     } catch (error) {
       console.error('Error playing audio:', error);
+      currentAudioRef.current = null;
       processAudioQueue();
     }
   };
@@ -257,6 +297,12 @@ export default function VoiceChat() {
       };
 
       mediaRecorderRef.current.onstop = async () => {
+        // Don't send audio if we're pausing for AI playback
+        if (shouldPauseRecordingRef.current) {
+          audioChunksRef.current = [];
+          return;
+        }
+
         if (audioChunksRef.current.length > 0) {
           const audioBlob = new Blob(audioChunksRef.current, {
             type: 'audio/webm',
@@ -274,12 +320,18 @@ export default function VoiceChat() {
         }
 
         // Restart recording immediately for continuous listening
-        if (!isMuted && mediaRecorderRef.current) {
+        // But only if not playing AI audio
+        if (
+          !isMuted &&
+          !shouldPauseRecordingRef.current &&
+          mediaRecorderRef.current
+        ) {
           setTimeout(() => {
             if (
               mediaRecorderRef.current &&
               mediaRecorderRef.current.state !== 'recording' &&
-              !isMuted
+              !isMuted &&
+              !shouldPauseRecordingRef.current
             ) {
               mediaRecorderRef.current.start();
               monitorAudioLevel();

@@ -232,57 +232,6 @@ English: 'Respond in PURE ENGLISH ONLY';
 - Try restarting both frontend and backend
 </details>
 
-## 🚀 Deployment
-
-### Backend → Railway
-
-```bash
-# railway.json
-{
-  "build": {
-    "builder": "NIXPACKS"
-  },
-  "deploy": {
-    "startCommand": "npm run start",
-    "restartPolicyType": "ON_FAILURE"
-  }
-}
-```
-
-1. Push code to GitHub
-2. Connect Railway to repository
-3. Add environment variables
-4. Deploy automatically
-
-### Frontend → Vercel
-
-```bash
-vercel --prod
-```
-
-1. Push code to GitHub
-2. Import project to Vercel
-3. Add environment variables
-4. Deploy automatically
-
-**Update WebSocket URL** in frontend after backend deployment:
-
-```typescript
-// Change to your Railway URL
-wsRef.current = new WebSocket('wss://your-backend.railway.app');
-```
-
-## 💰 Cost Breakdown
-
-| Service      | Free Tier     | Cost After             |
-| ------------ | ------------- | ---------------------- |
-| **Groq**     | 30 req/min    | Free (generous limits) |
-| **Edge TTS** | Unlimited     | Free forever           |
-| **LiveKit**  | 10k min/month | $0.006/min             |
-| **Railway**  | 500 hours     | $5/month               |
-| **Vercel**   | Unlimited     | $20/month (Pro)        |
-
-**Estimated Monthly Cost:** $0-5 for personal use 🎉
 
 ## 🛠️ Tech Stack
 
@@ -316,11 +265,3 @@ MIT License - feel free to use this project for personal or commercial purposes.
 - [Railway](https://railway.app/) for backend deployment
 
 ---
-
-<div align="center">
-
-**Made with ❤️ by [Your Name]**
-
-[⭐ Star this repo](https://github.com/yourusername/ai-voice-agent) • [🐛 Report Bug](https://github.com/yourusername/ai-voice-agent/issues) • [✨ Request Feature](https://github.com/yourusername/ai-voice-agent/issues)
-
-</div>
