@@ -74,7 +74,7 @@ Voice-chat/
 ### 1️⃣ Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/ai-voice-agent.git
+git clone https://github.com/PankajKumardev/ai-voice-agent
 cd ai-voice-agent
 ```
 
